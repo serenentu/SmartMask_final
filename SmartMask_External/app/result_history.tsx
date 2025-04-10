@@ -52,7 +52,8 @@ export default function ResultHistory() {
                 : 'Unknown time'}
             </Text>
             {/* 🔹 Display pH and health message */}
-            <Text style={styles.pH}>pH: {item.pH !== undefined ? item.pH.toFixed(2) : 'N/A'}</Text>
+            <Text style={styles.pH}>pH: {typeof item.pH === 'number' ? item.pH.toFixed(2) : 'N/A'}</Text>
+            <Text style={styles.pH}> pH: {item.pH !== undefined && item.pH !== null ? item.pH.toFixed(2) : 'N/A'}</Text>
             <Text style={styles.healthMessage}>{getHealthMessage(item.healthState)}</Text>
           </View>
 
