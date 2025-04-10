@@ -10,11 +10,11 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useResults } from './ResultsContext';
+import { getHealthMessage } from './healthUtils';
 
 export default function ResultHistory() {
   const { results, clearResults } = useResults();
   const router = useRouter();
-  
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
@@ -51,14 +51,14 @@ export default function ResultHistory() {
                   })
                 : 'Unknown time'}
             </Text>
-            {/* 🔹 Display pH and health state */}
+            {/* 🔹 Display pH and health message */}
             <Text style={styles.pH}>pH: {item.pH !== undefined ? item.pH.toFixed(2) : 'N/A'}</Text>
-            <Text style={[styles.healthState, getHealthStateStyle(item.healthState)]}>{item.healthState || 'Unknown'}</Text>
-            </View>
+            <Text style={styles.healthMessage}>{getHealthMessage(item.healthState)}</Text>
+          </View>
 
-            <Image source={{ uri: item.imageUri }} style={styles.resultImage} />
-            </TouchableOpacity>
-            ))}
+          <Image source={{ uri: item.imageUri }} style={styles.resultImage} />
+        </TouchableOpacity>
+      ))}
 
       <View style={styles.buttons}>
         <Button title="CLEAR HISTORY" onPress={clearResults} />
@@ -67,21 +67,6 @@ export default function ResultHistory() {
     </ScrollView>
   );
 }
-
-// Define getHealthStateStyle function outside the component
-const getHealthStateStyle = (healthState) => {
-  switch (healthState) {
-    case 'Healthy': 
-      return { color: '#00ab41' }; // Green for healthy
-    case 'Slight Risk': 
-      return { color: '#FFDE21' }; // Yellow for slight risk
-    case 'Abnormal': 
-      return { color: '#ff0000' }; // Red for abnormal
-    default: 
-      return { color: '#aaa' }; // Grey for unknown
-  }
-};
-
 
 const styles = StyleSheet.create({
   container: {
@@ -120,10 +105,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginTop: 4,
   },
-  healthState: {
+  healthMessage: {
+    color: 'white',
     fontSize: 16,
-    fontWeight: 'bold',
     marginTop: 4,
+    fontWeight: 'bold',
   },
   resultImage: {
     width: 60,
