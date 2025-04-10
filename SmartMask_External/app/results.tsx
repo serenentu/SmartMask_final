@@ -1,69 +1,60 @@
-import React, {useEffect, useState} from 'react';
+import React, { useState } from 'react';
 import { View, Text, Image, StyleSheet } from 'react-native';
-import {Link} from 'expo-router';
-
-// const img = require ("../assets/images/cartoon_mask.png")
-
-export const classifyHealthState = (pH) => {
-    if (pH === null) return "Unknown";
-    if (pH <= 6.5 || pH > 8.3) return "Abnormal";
-    if (pH === 7.5) return "Healthy";
-    if (pH > 6.5 && pH <= 7.7) return "Slight Risk";
-    return "Unknown";
-};
+import { classifyHealthState, getHealthMessage } from './healthUtils';
 
 export default function ResultsScreen() {
     const [pH, setPH] = useState(7.5);
 
     // Determine the state based on pH value
     const healthState = classifyHealthState(pH);
+    const healthMessage = getHealthMessage(healthState);
 
-    return renderHealthState(healthState);
+    return renderHealthState(healthState, healthMessage);
 }
- // 🔹 Function to Render UI Based on Health State
-const renderHealthState = (healthState) => {
+
+// 🔹 Function to Render UI Based on Health State
+const renderHealthState = (healthState, healthMessage) => {
     switch (healthState) {
         case "Abnormal":
-            return <Abnormal />;
+            return <Abnormal healthMessage={healthMessage} />;
         case "Healthy":
-            return <Healthy />;
+            return <Healthy healthMessage={healthMessage} />;
         case "Slight Risk":
-            return <SlightRisk />;
+            return <SlightRisk healthMessage={healthMessage} />;
     }
 };
 
-const Abnormal = () => (
+const Abnormal = ({ healthMessage }) => (
     <View style={styles.container}>
         <Text style={styles.titlerisk}>Abnormal Result!</Text>
-        <Image source={require('../assets/images/at_risk.jpg')} style={styles.cartoon_mask}/>
-        <Text style={styles.text}>Please visit the nearest doctor as soon as possible!</Text>
+        <Image source={require('../assets/images/at_risk.jpg')} style={styles.cartoon_mask} />
+        <Text style={styles.text}>{healthMessage}</Text>
     </View>
 );
 
-const Healthy = () => (
+const Healthy = ({ healthMessage }) => (
     <View style={styles.container}>
         <Text style={styles.titlehealthy}>Healthy!</Text>
-        <Image source={require('../assets/images/healthy.jpg')} style={styles.cartoon_mask}/>
-        <Text style={styles.text}>Nothing to worry about!</Text>
+        <Image source={require('../assets/images/healthy.jpg')} style={styles.cartoon_mask} />
+        <Text style={styles.text}>{healthMessage}</Text>
     </View>
 );
 
-const SlightRisk = () => (
+const SlightRisk = ({ healthMessage }) => (
     <View style={styles.container}>
         <Text style={styles.titlecaution}>Slight Risk!</Text>
-        <Image source={require('../assets/images/caution.jpg')} style={styles.cartoon_mask}/>
-        <Text style={styles.text}>Please monitor your health and consider a medical check-up.</Text>
+        <Image source={require('../assets/images/caution.jpg')} style={styles.cartoon_mask} />
+        <Text style={styles.text}>{healthMessage}</Text>
     </View>
 );
-
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        justifyContent: 'flex-start', 
+        justifyContent: 'flex-start',
         alignItems: 'center',
         backgroundColor: '#ffffff',
-        paddingTop: 50,  
+        paddingTop: 50,
     },
     titlerisk: {
         fontSize: 40,
@@ -71,21 +62,18 @@ const styles = StyleSheet.create({
         marginTop: 10,
         color: '#ff0000',
     },
-    
     titlehealthy: {
         fontSize: 40,
         fontWeight: 'bold',
         marginTop: 10,
         color: '#00ab41',
     },
-
     titlecaution: {
         fontSize: 40,
         fontWeight: 'bold',
         marginTop: 10,
         color: '#FFDE21',
     },
-
     text: {
         fontSize: 30,
         fontWeight: 'bold',
@@ -94,7 +82,6 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         color: '#000000',
     },
-
     cartoon_mask: {
         width: 380,
         height: 380,
@@ -108,15 +95,14 @@ const styles = StyleSheet.create({
         resizeMode: 'contain',
     },
     button: {
-        backgroundColor: '#d3d3d3', // 🔹 Fill color (Change this to your preferred color)
-        paddingVertical: 12, // 🔹 Space inside the button (height)
-        paddingHorizontal: 20, // 🔹 Space inside the button (width)
-        borderRadius: 10, // 🔹 Rounded corners
-        borderWidth: 2, // 🔹 Border thickness
-        borderColor: '#0056b3', // 🔹 Border color
-        alignItems: 'center', // 🔹 Centers text inside the button
+        backgroundColor: '#d3d3d3',
+        paddingVertical: 12,
+        paddingHorizontal: 20,
+        borderRadius: 10,
+        borderWidth: 2,
+        borderColor: '#0056b3',
+        alignItems: 'center',
         justifyContent: 'center',
-        marginBottom: 50, // 🔹 Space below the button
+        marginBottom: 50,
     }
-    
-    });
+});
