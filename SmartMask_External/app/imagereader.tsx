@@ -16,14 +16,14 @@ import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system';
 import { useRouter } from 'expo-router';
 import { useResults } from './ResultsContext';
-import { classifyHealthState } from './results';
-
+import { classifyHealthState } from './healthUtils'; // Update the import statement
 
 const URL = 'https://sdk.photoroom.com/v1/segment';
-const PlaceholderImage = require('../assets/images/imagereader_placeholder.jpg');
-const API_KEY = 'sandbox_fd48f847b70fe7befcc4ace1afd9d7f21b1e48d1';
+const FlaskURL = 'http://192.168.1.208:5000/process_image';
+const PlaceholderImage = require('../assets/images/background-image.png');
+const API_KEY = 'sandbox_0a358aa148144b77bb053d41aff3f19ec948c1b0';
 
-export const removeBackground = async (imageUri: string) => {
+const removeBackground = async (imageUri: string) => {
   try {
     const formData = new FormData();
     formData.append('image_file', {
@@ -55,11 +55,51 @@ export const removeBackground = async (imageUri: string) => {
   }
 };
 
+const processWithFlask = async (imageUri: string, retries = 3) => {
+  try {
+    const formData = new FormData();
+    formData.append('image', {
+      uri: imageUri,
+      name: 'image.jpg',
+      type: 'image/jpeg',
+    } as any);
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000); // 10 seconds timeout
+
+    const apiResponse = await fetch(FlaskURL, {
+      method: 'POST',
+      body: formData,
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!apiResponse.ok) {
+      throw new Error(`Flask API request failed with status ${apiResponse.status}`);
+    }
+
+    const responseData = await apiResponse.json();
+    return responseData;
+  } catch (e) {
+    if (retries > 0) {
+      console.warn(`Retrying... (${retries} retries left)`);
+      return processWithFlask(imageUri, retries - 1);
+    } else {
+      console.error('Error processing image with Flask:', e);
+      Alert.alert('Error', e.message || 'Unknown error occurred');
+      return null;
+    }
+  }
+};
+
 export default function ImageReader() {
   const [processedImage, setProcessedImage] = useState<string | undefined>();
   const [isLoading, setIsLoading] = useState(false);
   const [nameModalVisible, setNameModalVisible] = useState(false);
   const [userName, setUserName] = useState('');
+  const [healthMessage, setHealthMessage] = useState<string | undefined>();
+  const [detectedPH, setDetectedPH] = useState<number | undefined>();
 
   const router = useRouter();
   const { addResult } = useResults();
@@ -91,6 +131,13 @@ export default function ImageReader() {
       });
 
       setProcessedImage(fileUri);
+      // Fetch the Flask response (assuming Flask returns pH and health message)
+      const flaskResponse = await processWithFlask(fileUri);
+      if (flaskResponse) {
+        setDetectedPH(flaskResponse.detected_pH);
+        setHealthMessage(flaskResponse.health_message);
+      }
+
       setNameModalVisible(true);
     } else {
       Alert.alert('Processing Failed', 'Could not remove background.');
@@ -104,20 +151,18 @@ export default function ImageReader() {
       return;
     }
 
-    // 🔹 Set pH manually (later fetch from Python) Change to set on Python
-    const pH = 7;  
-
     await addResult({
       name: userName,
       imageUri: processedImage,
       timestamp: new Date().toISOString(),
-      pH: pH,
-      healthState: classifyHealthState(pH),
+      pH: detectedPH,
+      healthState: classifyHealthState(detectedPH),
     });
 
     Alert.alert('Saved', 'Your result has been saved.');
     setNameModalVisible(false);
     setUserName('');
+    router.push('/results');
   };
 
   return (
@@ -134,8 +179,8 @@ export default function ImageReader() {
 
       <View style={styles.footerContainer}>
         <Button theme="primary" label="Choose a photo" onPress={pickImageAsync} />
-        <Button theme="primary" label="Results" onPress={() => router.push('/results')} />
         <Button theme="primary" label="Results History" onPress={() => router.push('/result_history')} />
+        {processedImage && <Button theme="primary" label="Results" onPress={() => router.push('/results')} />}
       </View>
 
       <Modal visible={nameModalVisible} transparent animationType="slide">
@@ -149,6 +194,9 @@ export default function ImageReader() {
               value={userName}
               onChangeText={setUserName}
             />
+            {healthMessage && (
+              <Text style={{ color: 'white', marginTop: 10 }}>{healthMessage}</Text>
+            )}
             <RNButton title="Save Result" onPress={saveToMemory} />
           </View>
         </View>
