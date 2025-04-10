@@ -6,8 +6,8 @@ export type Result = {
   name: string;
   imageUri: string; // store URI only
   timestamp: string;
-  pH: number | null, //
-  healthState: string, //
+  pH: number | null; // pH is nullable
+  healthState: string;
 };
 
 type ResultsContextType = {
