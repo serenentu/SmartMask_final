@@ -19,7 +19,7 @@ import { useResults } from './ResultsContext';
 import { classifyHealthState } from './healthUtils'; // Update the import statement
 
 const URL = 'https://sdk.photoroom.com/v1/segment';
-const FlaskURL = 'http://192.168.1.208:5000/process_image';
+const FlaskURL = 'http://192.168.1.130:5000/process_image';
 const PlaceholderImage = require('../assets/images/background-image.png');
 const API_KEY = 'sandbox_0a358aa148144b77bb053d41aff3f19ec948c1b0';
 
@@ -151,14 +151,13 @@ export default function ImageReader() {
       return;
     }
 
-    await addResult({
-      name: userName,
-      imageUri: processedImage,
-      timestamp: new Date().toISOString(),
-      pH: detectedPH,
-      healthState: classifyHealthState(detectedPH),
-    });
-
+await addResult({
+  name: userName,
+  imageUri: processedImage,
+  timestamp: new Date().toISOString(),
+  pH: detectedPH ?? null, // Ensure pH is set to null if detectedPH is undefined
+  healthState: classifyHealthState(detectedPH),
+});
     Alert.alert('Saved', 'Your result has been saved.');
     setNameModalVisible(false);
     setUserName('');
