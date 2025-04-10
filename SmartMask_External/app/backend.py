@@ -1,7 +1,54 @@
+from flask import Flask, request, jsonify, send_from_directory
 import cv2
 import numpy as np
 from collections import Counter
-from matplotlib import pyplot as plt
+from flask_cors import CORS
+
+# Initialize Flask app
+app = Flask(__name__)
+CORS(app)  # Allow cross-origin requests for front-end integration
+
+@app.route('/')
+def home():
+    """Health check route for the Flask server."""
+    return "Flask server is running!"
+
+@app.route('/favicon.ico')
+def favicon():
+    """Serve favicon for the Flask app."""
+    return send_from_directory('static', 'favicon.ico', mimetype='image/vnd.microsoft.icon')
+
+# ====================== FLASK API ENDPOINT ======================
+@app.route('/process_image', methods=['POST'])
+def process_image_endpoint():
+    """
+    Endpoint for processing an uploaded image.
+    Expects an image file upload from the front-end.
+    """
+    if 'image' not in request.files:
+        return jsonify({'error': 'No image uploaded'}), 400
+
+    file = request.files['image']
+    npimg = np.frombuffer(file.read(), np.uint8)
+    image = cv2.imdecode(npimg, cv2.IMREAD_COLOR)
+
+    if image is None:
+        return jsonify({'error': 'Invalid image file'}), 400
+
+    # Preprocess the image
+    image_corrected = preprocess_image(image)
+
+    # Detect colors and map to pH and health
+    detected_color = split_and_detect(image_corrected)
+    detected_pH = color_pH_mapping.get(detected_color, "Unknown")
+    health_message = health_findings.get(detected_pH, "No specific health issues identified.")
+
+    # Return results to the front-end
+    return jsonify({
+        'detected_color': detected_color,
+        'detected_pH': detected_pH,
+        'health_message': health_message
+    })
 
 # ====================== IMAGE PREPROCESSING ======================
 def preprocess_image(image):
@@ -206,3 +253,6 @@ axes[1].axis("off")
 
 plt.tight_layout()
 plt.show()
+if __name__ == "__main__":
+    # Run the Flask server
+    app.run(host='0.0.0.0', port=5000, debug=True)
