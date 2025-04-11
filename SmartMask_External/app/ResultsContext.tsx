@@ -47,7 +47,7 @@ export const ResultsProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   const addResult = async (result: Result) => {
     try {
-      const updated = [...results, result].slice(0, 10); // newest on top, max 10
+      const updated = [...results, result].slice(0, 50); // newest on top, max 50
       setResults(updated);
       await saveResults(updated);
     } catch (error) {
