@@ -22,8 +22,8 @@ def preprocess_image(image):
 
     # Boost Saturation & Brightness
     h, s, v = cv2.split(hsv)
-    s = cv2.add(s, 20)
-    v = cv2.add(v, 20)
+    s = cv2.add(s, 30)
+    v = cv2.add(v, 30)
     hsv_boosted = cv2.merge([h, s, v])
     image_boosted = cv2.cvtColor(hsv_boosted, cv2.COLOR_HSV2BGR)
 
@@ -45,16 +45,16 @@ def split_and_detect(image, sections=5):
     def detect_color(image_section, hsv_section):
         # Color ranges for HSV filtering
         color_ranges = {
-            "red1": ([0, 30, 80], [5, 255, 255]),
-            "red2": ([170, 30, 80], [180, 255, 255]),
-            "magenta": ([90, 30, 70], [100, 255, 255]),
-            "purple1": ([110, 30, 70], [145, 255, 255]),
-            "purple2": ([146, 30, 70], [165, 255, 255]),
-            "blue": ([105, 50, 70], [115, 255, 255]),
-            "green1": ([55, 40, 70], [74, 255, 255]),
-            "green2": ([75, 40, 70], [95, 255, 255]),
-            "yellow1": ([45, 30, 70], [54, 255, 255]),
-            "yellow2": ([25, 30, 70], [44, 255, 255]),
+            "red1": ([0, 30, 80], [5, 255, 255]),         # Deep red (pH 1)
+            "red2": ([170, 30, 80], [180, 255, 255]),     # Dark pink (pH 2)
+            "magenta": ([93, 25, 70], [100, 255, 255]),  # pH 3–4 (magenta)
+            "purple1": ([110, 25, 70], [145, 255, 255]),
+            "purple2": ([146, 25, 70], [165, 255, 255]),   # pH 6–6.5 (dull purple)
+            "blue": ([105, 50, 70], [115, 255, 255]),   # pH 7–8 (blue)
+            "green1": ([55, 40, 70], [74, 255, 255]),     # pH 9–10 (blue-green)
+            "green2": ([75, 40, 70], [92, 255, 255]),     # pH 11 (green)
+            "yellow1": ([45, 30, 70], [54, 255, 255]),    # pH 12–13 (yellow-green)
+            "yellow2": ([25, 30, 70], [44, 255, 255]),    # pH 13–14 (yellow-orange)
         }
 
         # Create masks for each color
@@ -85,7 +85,7 @@ def split_and_detect(image, sections=5):
 
         # Count the number of pixels for each color
         color_counts = {color: np.count_nonzero(mask) for color, mask in masks.items()}
-        MIN_PIXELS = 20
+        MIN_PIXELS = 25
         color_counts = {color: count for color, count in color_counts.items() if count > MIN_PIXELS}
 
         # Find the dominant color
@@ -125,14 +125,16 @@ health_findings = {
 def process_image():
     if 'image' not in request.files:
         return jsonify({"error": "No image uploaded"}), 400
+    
 
     file = request.files['image']
     npimg = np.frombuffer(file.read(), np.uint8)
-    image = cv2.imdecode(npimg, cv2.IMREAD_COLOR)
+    image1 = cv2.imdecode(npimg, cv2.IMREAD_COLOR)
+    image = image1[240:400, 400:450]
 
     if image is None:
         return jsonify({"error": "Invalid image format"}), 400
-
+    
     image_corrected = preprocess_image(image)
     detected_colors = split_and_detect(image_corrected)
 
