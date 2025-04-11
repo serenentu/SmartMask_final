@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useResults } from './ResultsContext';
-import { getHealthMessage } from './healthUtils';
+import { classifyHealthState, getHealthMessage } from './healthUtils'; // Import functions
 
 export default function ResultHistory() {
   const { results, clearResults } = useResults();
@@ -20,46 +20,59 @@ export default function ResultHistory() {
     <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title}>Results History</Text>
 
-      {[...results].reverse().map((item, index) => (
-        <TouchableOpacity
-          key={index}
-          style={styles.resultCard}
-          onPress={() =>
-            router.push({
-              pathname: '/result_detail',
-              params: {
-                name: item.name,
-                imageUri: item.imageUri,
-                timestamp: item.timestamp,
-                pH: item.pH,
-                healthState: item.healthState,
-              },
-            })
-          }
-        >
-          <View style={{ flex: 1 }}>
-            <Text style={styles.name}>{item.name}</Text>
-            <Text style={styles.timestamp}>
-              {item.timestamp
-                ? new Date(item.timestamp).toLocaleString('en-SG', {
-                    day: '2-digit',
-                    month: 'short',
-                    year: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                    hour12: true,
-                  })
-                : 'Unknown time'}
-            </Text>
-            {/* 🔹 Display pH and health message */}
-            <Text style={styles.pH}>pH: {typeof item.pH === 'number' ? item.pH.toFixed(2) : 'N/A'}</Text>
-            <Text style={styles.pH}> pH: {item.pH !== undefined && item.pH !== null ? item.pH.toFixed(2) : 'N/A'}</Text>
-            <Text style={styles.healthMessage}>{getHealthMessage(item.healthState)}</Text>
-          </View>
+      {[...results].reverse().map((item, index) => {
+        // Dynamically classify health state and message
+        const healthState = classifyHealthState(item.pH ?? null);
+        const healthMessage = getHealthMessage(healthState);
 
-          <Image source={{ uri: item.imageUri }} style={styles.resultImage} />
-        </TouchableOpacity>
-      ))}
+        return (
+          <TouchableOpacity
+            key={index}
+            style={styles.resultCard}
+            onPress={() =>
+              router.push({
+                pathname: '/result_detail',
+                params: {
+                  name: item.name,
+                  imageUri: item.imageUri,
+                  timestamp: item.timestamp,
+                  pH: item.pH,
+                  healthState: healthState,
+                },
+              })
+            }
+          >
+            <View style={{ flex: 1 }}>
+              <Text style={styles.name}>{item.name}</Text>
+              <Text style={styles.timestamp}>
+                {item.timestamp
+                  ? new Date(item.timestamp).toLocaleString('en-SG', {
+                      day: '2-digit',
+                      month: 'short',
+                      year: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                      hour12: true,
+                    })
+                  : 'Unknown time'}
+              </Text>
+              <Text style={styles.pH}>
+                pH: {item.pH !== undefined && !isNaN(Number(item.pH)) 
+                  ? Number(item.pH).toFixed(2) 
+                  : 'N/A'}
+              </Text>
+              <Text style={[styles.healthState, getHealthStateStyle(healthState)]}>
+                Risk Level: {healthState}
+              </Text>
+              {healthMessage && (
+                <Text style={styles.healthMessage}>{healthMessage}</Text>
+              )}
+            </View>
+
+            <Image source={{ uri: item.imageUri }} style={styles.resultImage} />
+          </TouchableOpacity>
+        );
+      })}
 
       <View style={styles.buttons}>
         <Button title="CLEAR HISTORY" onPress={clearResults} />
@@ -68,6 +81,19 @@ export default function ResultHistory() {
     </ScrollView>
   );
 }
+
+const getHealthStateStyle = (healthState: string) => {
+  switch (healthState) {
+    case 'Healthy': 
+      return { color: '#00ab41' };
+    case 'Slight Risk': 
+      return { color: '#FFDE21' };
+    case 'Abnormal': 
+      return { color: '#ff0000' };
+    default: 
+      return { color: '#aaa' };
+  }
+};
 
 const styles = StyleSheet.create({
   container: {
@@ -106,11 +132,15 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginTop: 4,
   },
+  healthState: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginTop: 4,
+  },
   healthMessage: {
     color: 'white',
-    fontSize: 16,
+    fontSize: 14,
     marginTop: 4,
-    fontWeight: 'bold',
   },
   resultImage: {
     width: 60,
