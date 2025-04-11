@@ -76,6 +76,12 @@ def split_and_detect(image, sections=5):
         for color in masks:
             masks[color] = cv2.morphologyEx(masks[color], cv2.MORPH_OPEN, kernel)
             masks[color] = cv2.morphologyEx(masks[color], cv2.MORPH_CLOSE, kernel)
+        
+        # Apply masks to the original image
+        segmented_images = {
+            color: cv2.bitwise_and(image_section, image_section, mask=mask)
+            for color, mask in masks.items()
+        }
 
         # Count the number of pixels for each color
         color_counts = {color: np.count_nonzero(mask) for color, mask in masks.items()}
