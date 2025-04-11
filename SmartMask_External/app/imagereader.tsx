@@ -21,7 +21,7 @@ import { classifyHealthState } from './healthUtils'; // Update the import statem
 const URL = 'https://sdk.photoroom.com/v1/segment';
 const FlaskURL = 'http://192.168.1.130:5000/process_image';
 const PlaceholderImage = require('../assets/images/background-image.png');
-const API_KEY = 'sandbox_0a358aa148144b77bb053d41aff3f19ec948c1b0';
+const API_KEY = 'sandbox_7d311d836ce990c1f2d97bc3e96323642869bd38';
 
 const removeBackground = async (imageUri: string) => {
   try {
