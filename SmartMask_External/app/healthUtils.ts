@@ -1,9 +1,9 @@
 export const classifyHealthState = (pH: number | null): string => {
     if (pH === null) return "Unknown";
-    if (pH <= 6.5 || pH > 8.3) return "Abnormal";
-    if (pH > 7.0 && pH <= 7.6) return "Healthy";
-    if (pH > 6.5 && pH <= 6.9) return "Slight Risk";
-    if (pH > 6.9 && pH <= 7.7) return "Slight Risk";
+    if (pH <= 7.4 || pH > 8.6) return "Abnormal";
+    if (pH > 7.4 && pH <= 8.5) return "Healthy";
+    if (pH > 6.9 && pH <= 7.4) return "Slight Risk";
+    if (pH > 8.6 && pH <= 9.0) return "Slight Risk";
     return "Unknown";
 };
 
